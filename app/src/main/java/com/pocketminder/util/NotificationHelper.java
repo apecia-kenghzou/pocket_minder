@@ -86,9 +86,16 @@ public class NotificationHelper {
     }
 
     /**
-     * Show shopping reminder notification
+     * Show shopping reminder notification with action buttons
      */
     public void showShoppingReminder(String supermarketName, int itemCount) {
+        showShoppingReminder(supermarketName, itemCount, 0, 0);
+    }
+
+    /**
+     * Show shopping reminder notification with location for navigation
+     */
+    public void showShoppingReminder(String supermarketName, int itemCount, double lat, double lng) {
         Intent notificationIntent = new Intent(context, MainActivity.class);
         notificationIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
 
@@ -103,7 +110,7 @@ public class NotificationHelper {
         String message = String.format("You're near %s. You have %d item%s to buy!",
                 supermarketName, itemCount, itemCount > 1 ? "s" : "");
 
-        android.app.Notification notification = new NotificationCompat.Builder(context, CHANNEL_ID_REMINDER)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(context, CHANNEL_ID_REMINDER)
                 .setContentTitle(title)
                 .setContentText(message)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(message))
@@ -112,10 +119,29 @@ public class NotificationHelper {
                 .setAutoCancel(true)
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_REMINDER)
-                .setVibrate(new long[]{0, 500, 200, 500})
-                .build();
+                .setVibrate(new long[]{0, 500, 200, 500});
 
-        notificationManager.notify(NOTIFICATION_ID_REMINDER, notification);
+        // Add action buttons
+        // View List action
+        Intent viewListIntent = new Intent(context, com.pocketminder.receiver.NotificationActionReceiver.class);
+        viewListIntent.setAction(com.pocketminder.Constants.ACTION_VIEW_LIST);
+        PendingIntent viewListPendingIntent = PendingIntent.getBroadcast(
+                context, 1, viewListIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        builder.addAction(R.drawable.ic_notification, "View List", viewListPendingIntent);
+
+        // Navigate action (if location provided)
+        if (lat != 0 && lng != 0) {
+            Intent navigateIntent = new Intent(context, com.pocketminder.receiver.NotificationActionReceiver.class);
+            navigateIntent.setAction(com.pocketminder.Constants.ACTION_NAVIGATE);
+            navigateIntent.putExtra(com.pocketminder.receiver.NotificationActionReceiver.EXTRA_SUPERMARKET_LAT, lat);
+            navigateIntent.putExtra(com.pocketminder.receiver.NotificationActionReceiver.EXTRA_SUPERMARKET_LNG, lng);
+            navigateIntent.putExtra(com.pocketminder.receiver.NotificationActionReceiver.EXTRA_SUPERMARKET_NAME, supermarketName);
+            PendingIntent navigatePendingIntent = PendingIntent.getBroadcast(
+                    context, 2, navigateIntent, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+            builder.addAction(R.drawable.ic_notification, "Navigate", navigatePendingIntent);
+        }
+
+        notificationManager.notify(NOTIFICATION_ID_REMINDER, builder.build());
     }
 
     /**

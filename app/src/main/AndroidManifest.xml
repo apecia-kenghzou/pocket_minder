@@ -64,6 +64,24 @@
             </intent-filter>
         </receiver>
 
+        <!-- Geofence receiver for proximity alerts -->
+        <receiver
+            android:name=".receiver.GeofenceBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <!-- Notification action receiver -->
+        <receiver
+            android:name=".receiver.NotificationActionReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.pocketminder.ACTION_VIEW_LIST" />
+                <action android:name="com.pocketminder.ACTION_NAVIGATE" />
+                <action android:name="com.pocketminder.ACTION_MARK_PURCHASED" />
+            </intent-filter>
+        </receiver>
+
         <!-- Google Maps API Key -->
         <meta-data
             android:name="com.google.android.geo.API_KEY"
