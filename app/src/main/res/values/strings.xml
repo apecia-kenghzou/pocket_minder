@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Pocket Minder</string>
+    <string name="notification_channel_location">Location Tracking</string>
+    <string name="notification_channel_reminder">Shopping Reminders</string>
+    <string name="notification_tracking_title">Pocket Minder Active</string>
+    <string name="notification_tracking_message">Monitoring your location for nearby supermarkets</string>
+</resources>
