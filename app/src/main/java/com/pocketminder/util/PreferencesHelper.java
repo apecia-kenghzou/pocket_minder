@@ -13,6 +13,7 @@ public class PreferencesHelper {
     private static final String KEY_LAST_NOTIFIED_SUPERMARKET = "last_notified_supermarket";
     private static final String KEY_NOTIFICATION_RADIUS = "notification_radius";
     private static final String KEY_FIRST_RUN = "first_run";
+    private static final String KEY_USE_GEOFENCING = "use_geofencing";
 
     private final SharedPreferences preferences;
 
@@ -58,5 +59,13 @@ public class PreferencesHelper {
 
     public void setFirstRun(boolean firstRun) {
         preferences.edit().putBoolean(KEY_FIRST_RUN, firstRun).apply();
+    }
+
+    public boolean isGeofencingEnabled() {
+        return preferences.getBoolean(KEY_USE_GEOFENCING, true);
+    }
+
+    public void setGeofencingEnabled(boolean enabled) {
+        preferences.edit().putBoolean(KEY_USE_GEOFENCING, enabled).apply();
     }
 }
