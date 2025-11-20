@@ -17,7 +17,7 @@ import java.util.List;
 public class ShoppingListDBHelper extends SQLiteOpenHelper {
 
     private static final String DATABASE_NAME = "pocket_minder.db";
-    private static final int DATABASE_VERSION = 1;
+    private static final int DATABASE_VERSION = 2;
 
     // Table name and columns
     private static final String TABLE_SHOPPING_LIST = "shopping_list";
@@ -50,12 +50,17 @@ public class ShoppingListDBHelper extends SQLiteOpenHelper {
                 + COLUMN_CREATED_TIMESTAMP + " INTEGER NOT NULL"
                 + ")";
         db.execSQL(CREATE_TABLE);
+
+        // Create supermarket cache table
+        SupermarketCacheManager.createTable(db);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_SHOPPING_LIST);
-        onCreate(db);
+        if (oldVersion < 2) {
+            // Add cache table in version 2
+            SupermarketCacheManager.createTable(db);
+        }
     }
 
     /**
