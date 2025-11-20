@@ -78,13 +78,27 @@ public class GooglePlacesAPI {
                     + "&type=" + TYPE_GROCERY
                     + "&key=" + URLEncoder.encode(apiKey, "UTF-8");
 
-            Log.d(TAG, "Searching for supermarkets within " + searchRadius + "m radius");
+            // Log API call details (mask the API key)
+            String maskedUrl = urlString.replaceAll("key=[^&]+", "key=***MASKED***");
+            Log.d(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            Log.d(TAG, "API Request:");
+            Log.d(TAG, "  Location: " + latitude + ", " + longitude);
+            Log.d(TAG, "  Radius: " + searchRadius + "m");
+            Log.d(TAG, "  URL: " + maskedUrl);
+            Log.d(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
             String response = makeHttpRequest(urlString);
+
+            if (response.isEmpty()) {
+                Log.e(TAG, "❌ Empty response from Google API");
+                return supermarkets;
+            }
+
             supermarkets = parseSupermarketResponse(response);
 
-            Log.d(TAG, "Found " + supermarkets.size() + " supermarkets within " + searchRadius + "m");
+            Log.d(TAG, "✅ Found " + supermarkets.size() + " supermarkets within " + searchRadius + "m");
         } catch (Exception e) {
-            Log.e(TAG, "Error searching supermarkets", e);
+            Log.e(TAG, "❌ Error searching supermarkets", e);
         }
 
         return supermarkets;
@@ -102,6 +116,8 @@ public class GooglePlacesAPI {
 
         try {
             int responseCode = connection.getResponseCode();
+            Log.d(TAG, "HTTP Response Code: " + responseCode);
+
             if (responseCode == HttpURLConnection.HTTP_OK) {
                 BufferedReader reader = new BufferedReader(
                         new InputStreamReader(connection.getInputStream()));
@@ -112,9 +128,24 @@ public class GooglePlacesAPI {
                     response.append(line);
                 }
                 reader.close();
-                return response.toString();
+
+                String jsonResponse = response.toString();
+                Log.d(TAG, "Raw API Response (first 500 chars): " + jsonResponse.substring(0, Math.min(500, jsonResponse.length())));
+
+                return jsonResponse;
             } else {
-                Log.e(TAG, "HTTP error code: " + responseCode);
+                // Try to read error response
+                BufferedReader errorReader = new BufferedReader(
+                        new InputStreamReader(connection.getErrorStream()));
+                StringBuilder errorResponse = new StringBuilder();
+                String line;
+                while ((line = errorReader.readLine()) != null) {
+                    errorResponse.append(line);
+                }
+                errorReader.close();
+
+                Log.e(TAG, "❌ HTTP error code: " + responseCode);
+                Log.e(TAG, "❌ Error response: " + errorResponse.toString());
                 return "";
             }
         } finally {
@@ -132,16 +163,51 @@ public class GooglePlacesAPI {
             JSONObject jsonObject = new JSONObject(jsonResponse);
             String status = jsonObject.getString("status");
 
-            if (!"OK".equals(status) && !"ZERO_RESULTS".equals(status)) {
-                Log.e(TAG, "API error status: " + status);
-                return supermarkets;
+            Log.d(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+            Log.d(TAG, "API Response Status: " + status);
+
+            // Check for error messages
+            if (jsonObject.has("error_message")) {
+                String errorMessage = jsonObject.getString("error_message");
+                Log.e(TAG, "❌ API Error Message: " + errorMessage);
+            }
+
+            // Detailed status explanations
+            switch (status) {
+                case "OK":
+                    Log.d(TAG, "✅ API returned results successfully");
+                    break;
+                case "ZERO_RESULTS":
+                    Log.w(TAG, "⚠️ ZERO_RESULTS: No places found matching your criteria");
+                    Log.w(TAG, "   This is normal if there are no stores in the area");
+                    return supermarkets;
+                case "REQUEST_DENIED":
+                    Log.e(TAG, "❌ REQUEST_DENIED: API key is invalid or not authorized");
+                    Log.e(TAG, "   Check: API key in gradle.properties");
+                    Log.e(TAG, "   Check: Places API is enabled in Google Cloud Console");
+                    Log.e(TAG, "   Check: Billing is enabled");
+                    return supermarkets;
+                case "INVALID_REQUEST":
+                    Log.e(TAG, "❌ INVALID_REQUEST: Missing required parameters");
+                    return supermarkets;
+                case "OVER_QUERY_LIMIT":
+                    Log.e(TAG, "❌ OVER_QUERY_LIMIT: You've exceeded your API quota");
+                    return supermarkets;
+                case "UNKNOWN_ERROR":
+                    Log.e(TAG, "❌ UNKNOWN_ERROR: Server error, try again");
+                    return supermarkets;
+                default:
+                    Log.e(TAG, "❌ Unknown status: " + status);
+                    return supermarkets;
             }
 
             if (!jsonObject.has("results")) {
+                Log.w(TAG, "⚠️ No 'results' field in response");
                 return supermarkets;
             }
 
             JSONArray results = jsonObject.getJSONArray("results");
+            Log.d(TAG, "📍 Processing " + results.length() + " results from API");
 
             for (int i = 0; i < results.length(); i++) {
                 JSONObject place = results.getJSONObject(i);
@@ -176,9 +242,19 @@ public class GooglePlacesAPI {
                 }
 
                 supermarkets.add(supermarket);
+
+                // Log each store found
+                Log.d(TAG, String.format("  [%d] %s (%.4f, %.4f)",
+                        i + 1, supermarket.getName(),
+                        supermarket.getLatitude(), supermarket.getLongitude()));
             }
+
+            Log.d(TAG, "✅ Successfully parsed " + supermarkets.size() + " supermarkets");
+            Log.d(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+
         } catch (JSONException e) {
-            Log.e(TAG, "Error parsing JSON response", e);
+            Log.e(TAG, "❌ Error parsing JSON response", e);
+            Log.e(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         }
 
         return supermarkets;
