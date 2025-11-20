@@ -26,7 +26,7 @@ public class GooglePlacesAPI {
     private static final String PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place";
     private static final String TYPE_SUPERMARKET = "supermarket";
     private static final String TYPE_GROCERY = "grocery_or_supermarket";
-    private static final int SEARCH_RADIUS = 2000; // 2km radius
+    private static final int DEFAULT_SEARCH_RADIUS = 2000; // 2km radius default
 
     private final String apiKey;
 
@@ -53,22 +53,36 @@ public class GooglePlacesAPI {
     }
 
     /**
-     * Search for nearby supermarkets
+     * Search for nearby supermarkets with default radius (2km)
      */
     public List<Supermarket> searchNearbySupermarkets(double latitude, double longitude) {
+        return searchNearbySupermarkets(latitude, longitude, DEFAULT_SEARCH_RADIUS);
+    }
+
+    /**
+     * Search for nearby supermarkets with custom radius
+     * @param latitude Latitude coordinate
+     * @param longitude Longitude coordinate
+     * @param radiusMeters Search radius in meters (max 50000 per Google API limits)
+     */
+    public List<Supermarket> searchNearbySupermarkets(double latitude, double longitude, int radiusMeters) {
         List<Supermarket> supermarkets = new ArrayList<>();
+
+        // Google Places API has a max radius of 50km
+        int searchRadius = Math.min(radiusMeters, 50000);
 
         try {
             String urlString = PLACES_API_BASE + "/nearbysearch/json?"
                     + "location=" + latitude + "," + longitude
-                    + "&radius=" + SEARCH_RADIUS
+                    + "&radius=" + searchRadius
                     + "&type=" + TYPE_GROCERY
                     + "&key=" + URLEncoder.encode(apiKey, "UTF-8");
 
+            Log.d(TAG, "Searching for supermarkets within " + searchRadius + "m radius");
             String response = makeHttpRequest(urlString);
             supermarkets = parseSupermarketResponse(response);
 
-            Log.d(TAG, "Found " + supermarkets.size() + " supermarkets nearby");
+            Log.d(TAG, "Found " + supermarkets.size() + " supermarkets within " + searchRadius + "m");
         } catch (Exception e) {
             Log.e(TAG, "Error searching supermarkets", e);
         }

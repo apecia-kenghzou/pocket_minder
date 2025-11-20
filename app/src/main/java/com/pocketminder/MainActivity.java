@@ -422,7 +422,13 @@ public class MainActivity extends AppCompatActivity {
                 } else if (!supermarkets.isEmpty()) {
                     locationText += String.format("\n⚠️ Found %d stores nearby but none are enabled in your preferences.", supermarkets.size());
                 } else {
-                    locationText += "\n📍 No stores detected nearby (2km radius)";
+                    // Show actual search radius
+                    int searchRadius = preferencesHelper.getProximityRange();
+                    if (searchRadius >= 1000) {
+                        locationText += String.format("\n📍 No stores detected nearby (%.1fkm radius)", searchRadius / 1000.0f);
+                    } else {
+                        locationText += String.format("\n📍 No stores detected nearby (%dm radius)", searchRadius);
+                    }
                 }
 
                 tvLocationInfo.setText(locationText);

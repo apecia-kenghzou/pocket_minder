@@ -179,20 +179,22 @@ public class LocationTrackingService extends Service {
                 return;
             }
 
-            // Fetch nearby supermarkets
-            List<Supermarket> supermarkets = placesAPI.searchNearbySupermarkets(
-                    currentLocation.getLatitude(),
-                    currentLocation.getLongitude());
-
-            nearbySupermarkets = supermarkets;
-
             // Get dynamic proximity range (200m normal, 5km in dev mode)
             int proximityThreshold = preferencesHelper.getProximityRange();
             boolean devMode = preferencesHelper.isDeveloperModeEnabled();
 
             if (devMode) {
-                Log.d(TAG, "Developer mode: Using extended proximity range: " + proximityThreshold + "m");
+                Log.d(TAG, "Developer mode: Using extended search radius: " + proximityThreshold + "m");
             }
+
+            // Fetch nearby supermarkets with dynamic radius
+            // In dev mode, this will search up to 10km instead of default 2km
+            List<Supermarket> supermarkets = placesAPI.searchNearbySupermarkets(
+                    currentLocation.getLatitude(),
+                    currentLocation.getLongitude(),
+                    proximityThreshold);
+
+            nearbySupermarkets = supermarkets;
 
             // Check proximity to each supermarket
             for (Supermarket supermarket : supermarkets) {
