@@ -126,6 +126,98 @@
             android:textColor="@android:color/darker_gray"
             android:layout_marginBottom="24dp" />
 
+        <!-- Developer Mode Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Developer / Testing"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Developer Mode"
+                android:textSize="16sp" />
+
+            <Switch
+                android:id="@+id/switchDeveloperMode"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="⚠️ For testing only: Extends notification range to 5km so you can test notifications without being near stores."
+            android:textSize="12sp"
+            android:textColor="@android:color/holo_orange_dark"
+            android:background="#FFF3E0"
+            android:padding="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:id="@+id/layoutDevRange"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="gone"
+            android:layout_marginBottom="24dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Test Proximity Range"
+                android:textSize="14sp"
+                android:layout_marginBottom="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="1km"
+                    android:textSize="12sp" />
+
+                <SeekBar
+                    android:id="@+id/seekBarDevRange"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:max="9000"
+                    android:progress="4000" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="10km"
+                    android:textSize="12sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/tvDevRangeValue"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="5000m (5km)"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+        </LinearLayout>
+
         <!-- About Section -->
         <TextView
             android:layout_width="match_parent"
@@ -138,7 +230,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Pocket Minder v1.1\nNever forget your shopping again!"
+            android:text="Pocket Minder v1.2\nNever forget your shopping again!"
             android:textSize="14sp"
             android:layout_marginBottom="24dp" />
 

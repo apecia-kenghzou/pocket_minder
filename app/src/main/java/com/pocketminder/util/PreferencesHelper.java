@@ -14,6 +14,8 @@ public class PreferencesHelper {
     private static final String KEY_NOTIFICATION_RADIUS = "notification_radius";
     private static final String KEY_FIRST_RUN = "first_run";
     private static final String KEY_USE_GEOFENCING = "use_geofencing";
+    private static final String KEY_DEVELOPER_MODE = "developer_mode";
+    private static final String KEY_DEV_PROXIMITY_RANGE = "dev_proximity_range";
 
     private final SharedPreferences preferences;
 
@@ -85,5 +87,42 @@ public class PreferencesHelper {
      */
     public void setStoreTypeEnabled(String storeType, boolean enabled) {
         preferences.edit().putBoolean("store_" + storeType, enabled).apply();
+    }
+
+    /**
+     * Check if developer mode is enabled
+     * Developer mode enables testing features like extended proximity range
+     * @return true if developer mode is enabled
+     */
+    public boolean isDeveloperModeEnabled() {
+        return preferences.getBoolean(KEY_DEVELOPER_MODE, false);
+    }
+
+    /**
+     * Enable or disable developer mode
+     * @param enabled true to enable, false to disable
+     */
+    public void setDeveloperModeEnabled(boolean enabled) {
+        preferences.edit().putBoolean(KEY_DEVELOPER_MODE, enabled).apply();
+    }
+
+    /**
+     * Get the proximity range for notifications in meters
+     * In developer mode, this can be extended to test notifications from farther away
+     * @return proximity range in meters (default: 200m, dev mode: 5000m)
+     */
+    public int getProximityRange() {
+        if (isDeveloperModeEnabled()) {
+            return preferences.getInt(KEY_DEV_PROXIMITY_RANGE, 5000); // 5km in dev mode
+        }
+        return getNotificationRadius(); // Normal mode: use setting (default 200m)
+    }
+
+    /**
+     * Set the proximity range for developer mode testing
+     * @param rangeMeters range in meters (e.g., 5000 for 5km)
+     */
+    public void setDevProximityRange(int rangeMeters) {
+        preferences.edit().putInt(KEY_DEV_PROXIMITY_RANGE, rangeMeters).apply();
     }
 }

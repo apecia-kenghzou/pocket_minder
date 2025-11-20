@@ -386,11 +386,43 @@ public class MainActivity extends AppCompatActivity {
                 String locationText = String.format("Current Location:\nLat: %.4f, Lng: %.4f\n",
                         location.getLatitude(), location.getLongitude());
 
-                if (!supermarkets.isEmpty()) {
-                    locationText += "\nNearby Supermarkets: " + supermarkets.size();
-                    Supermarket nearest = supermarkets.get(0);
-                    float distance = nearest.distanceTo(location.getLatitude(), location.getLongitude());
-                    locationText += String.format("\nNearest: %s (%.0fm)", nearest.getName(), distance);
+                // Filter supermarkets by user's enabled preferences
+                List<Supermarket> enabledSupermarkets = new ArrayList<>();
+                for (Supermarket supermarket : supermarkets) {
+                    if (isStoreEnabled(supermarket.getName())) {
+                        enabledSupermarkets.add(supermarket);
+                    }
+                }
+
+                if (!enabledSupermarkets.isEmpty()) {
+                    // Find nearest enabled store
+                    Supermarket nearestEnabled = null;
+                    float nearestDistance = Float.MAX_VALUE;
+
+                    for (Supermarket supermarket : enabledSupermarkets) {
+                        float distance = supermarket.distanceTo(location.getLatitude(), location.getLongitude());
+                        if (distance < nearestDistance) {
+                            nearestDistance = distance;
+                            nearestEnabled = supermarket;
+                        }
+                    }
+
+                    if (nearestEnabled != null) {
+                        locationText += String.format("\nEnabled Stores Nearby: %d", enabledSupermarkets.size());
+                        locationText += String.format("\n\nNearest Enabled Store:\n📍 %s", nearestEnabled.getName());
+                        locationText += String.format("\n📏 Distance: %.0fm", nearestDistance);
+
+                        // Show if within notification range
+                        if (nearestDistance <= 200) {
+                            locationText += " ✓ IN RANGE";
+                        } else {
+                            locationText += String.format(" (%.0fm to go)", nearestDistance - 200);
+                        }
+                    }
+                } else if (!supermarkets.isEmpty()) {
+                    locationText += String.format("\n⚠️ Found %d stores nearby but none are enabled in your preferences.", supermarkets.size());
+                } else {
+                    locationText += "\n📍 No stores detected nearby (2km radius)";
                 }
 
                 tvLocationInfo.setText(locationText);
@@ -398,6 +430,38 @@ public class MainActivity extends AppCompatActivity {
 
             // Schedule next update
             tvLocationInfo.postDelayed(this::updateLocationInfo, 5000);
+        }
+    }
+
+    /**
+     * Check if a store is enabled in user preferences
+     * Maps store names to store type preferences
+     */
+    private boolean isStoreEnabled(String storeName) {
+        if (storeName == null) {
+            return true;
+        }
+
+        String lowerName = storeName.toLowerCase();
+
+        // Map store names to preference keys
+        if (lowerName.contains("99 speedmart") || lowerName.contains("99speedmart")) {
+            return preferencesHelper.isStoreTypeEnabled("99speedmart");
+        } else if (lowerName.contains("kk mart") || lowerName.contains("kk super mart")) {
+            return preferencesHelper.isStoreTypeEnabled("kkmart");
+        } else if (lowerName.contains("caring")) {
+            return preferencesHelper.isStoreTypeEnabled("caring");
+        } else if (lowerName.contains("watsons")) {
+            return preferencesHelper.isStoreTypeEnabled("watsons");
+        } else if (lowerName.contains("guardian")) {
+            return preferencesHelper.isStoreTypeEnabled("guardian");
+        } else if (lowerName.contains("lotus")) {
+            return preferencesHelper.isStoreTypeEnabled("lotus");
+        } else if (lowerName.contains("jaya grocer")) {
+            return preferencesHelper.isStoreTypeEnabled("jayagrocer");
+        } else {
+            // For all other stores (AEON, Village Grocer, etc.)
+            return preferencesHelper.isStoreTypeEnabled("other");
         }
     }
 

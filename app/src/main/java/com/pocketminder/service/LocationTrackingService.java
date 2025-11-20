@@ -39,7 +39,7 @@ public class LocationTrackingService extends Service {
     private static final String TAG = "LocationTrackingService";
     private static final int LOCATION_UPDATE_INTERVAL = 30000; // 30 seconds
     private static final int FASTEST_UPDATE_INTERVAL = 15000; // 15 seconds
-    private static final float PROXIMITY_THRESHOLD = 200; // 200 meters
+    // PROXIMITY_THRESHOLD now dynamic - uses PreferencesHelper.getProximityRange()
 
     private final IBinder binder = new LocalBinder();
     private FusedLocationProviderClient fusedLocationClient;
@@ -186,6 +186,14 @@ public class LocationTrackingService extends Service {
 
             nearbySupermarkets = supermarkets;
 
+            // Get dynamic proximity range (200m normal, 5km in dev mode)
+            int proximityThreshold = preferencesHelper.getProximityRange();
+            boolean devMode = preferencesHelper.isDeveloperModeEnabled();
+
+            if (devMode) {
+                Log.d(TAG, "Developer mode: Using extended proximity range: " + proximityThreshold + "m");
+            }
+
             // Check proximity to each supermarket
             for (Supermarket supermarket : supermarkets) {
                 float distance = supermarket.distanceTo(
@@ -195,7 +203,7 @@ public class LocationTrackingService extends Service {
                 Log.d(TAG, "Distance to " + supermarket.getName() + ": " + distance + "m");
 
                 // If within proximity threshold and not already notified
-                if (distance <= PROXIMITY_THRESHOLD && !notifiedSupermarkets.contains(supermarket.getPlaceId())) {
+                if (distance <= proximityThreshold && !notifiedSupermarkets.contains(supermarket.getPlaceId())) {
                     // Check if this store type is enabled in user preferences
                     if (!isStoreEnabled(supermarket.getName())) {
                         Log.d(TAG, "Store type disabled for: " + supermarket.getName());
@@ -204,7 +212,11 @@ public class LocationTrackingService extends Service {
 
                     // Send notification on main thread
                     new Handler(Looper.getMainLooper()).post(() -> {
-                        notificationHelper.showShoppingReminder(supermarket.getName(), unpurchasedCount);
+                        notificationHelper.showShoppingReminder(
+                                supermarket.getName(),
+                                unpurchasedCount,
+                                supermarket.getLatitude(),
+                                supermarket.getLongitude());
                         notifiedSupermarkets.add(supermarket.getPlaceId());
 
                         // Save last notification time
@@ -218,7 +230,7 @@ public class LocationTrackingService extends Service {
             }
 
             // Clear notified set if user has moved away from all supermarkets
-            if (shouldClearNotifiedSet(supermarkets, currentLocation)) {
+            if (shouldClearNotifiedSet(supermarkets, currentLocation, proximityThreshold)) {
                 notifiedSupermarkets.clear();
                 Log.d(TAG, "Cleared notified supermarkets set");
             }
@@ -232,7 +244,7 @@ public class LocationTrackingService extends Service {
      * Check if we should clear the notified supermarkets set
      * (when user moves far from all previously notified supermarkets)
      */
-    private boolean shouldClearNotifiedSet(List<Supermarket> supermarkets, Location currentLocation) {
+    private boolean shouldClearNotifiedSet(List<Supermarket> supermarkets, Location currentLocation, int proximityThreshold) {
         if (notifiedSupermarkets.isEmpty()) {
             return false;
         }
@@ -242,7 +254,7 @@ public class LocationTrackingService extends Service {
                 float distance = supermarket.distanceTo(
                         currentLocation.getLatitude(),
                         currentLocation.getLongitude());
-                if (distance <= PROXIMITY_THRESHOLD * 3) { // 3x threshold
+                if (distance <= proximityThreshold * 3) { // 3x threshold
                     return false;
                 }
             }
