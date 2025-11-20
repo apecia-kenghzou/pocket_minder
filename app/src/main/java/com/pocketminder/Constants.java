@@ -27,6 +27,17 @@ public class Constants {
     // API Settings
     public static final String GOOGLE_PLACES_BASE_URL = "https://maps.googleapis.com/maps/api/place";
     public static final String PLACE_TYPE_SUPERMARKET = "grocery_or_supermarket";
+
+    // Malaysian Store Types (supports 99 Speedmart, KK Mart, Caring, Watsons, Guardian, Lotus's, Jaya Grocer)
+    public static final String[] PLACE_TYPES_MALAYSIA = {
+        "grocery_or_supermarket",  // Jaya Grocer, Lotus's, general supermarkets
+        "supermarket",              // Lotus's, Jaya Grocer, AEON, etc.
+        "convenience_store",        // 99 Speedmart, KK Super Mart, 7-Eleven
+        "pharmacy",                 // Caring Pharmacy, Watsons, Guardian
+        "drugstore",                // Watsons, Guardian (alternative classification)
+        "health"                    // Health & beauty stores
+    };
+
     public static final int API_TIMEOUT_MS = 10000; // 10 seconds
     public static final int MAX_RETRY_ATTEMPTS = 3;
     public static final int RETRY_DELAY_MS = 2000;

@@ -103,4 +103,18 @@ public class Supermarket implements Serializable {
     public String toString() {
         return name + " - " + (vicinity != null ? vicinity : address);
     }
+
+    // Override equals and hashCode to properly deduplicate stores in HashSet
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Supermarket that = (Supermarket) o;
+        return placeId != null && placeId.equals(that.placeId);
+    }
+
+    @Override
+    public int hashCode() {
+        return placeId != null ? placeId.hashCode() : 0;
+    }
 }
