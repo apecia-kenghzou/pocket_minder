@@ -196,6 +196,12 @@ public class LocationTrackingService extends Service {
 
                 // If within proximity threshold and not already notified
                 if (distance <= PROXIMITY_THRESHOLD && !notifiedSupermarkets.contains(supermarket.getPlaceId())) {
+                    // Check if this store type is enabled in user preferences
+                    if (!isStoreEnabled(supermarket.getName())) {
+                        Log.d(TAG, "Store type disabled for: " + supermarket.getName());
+                        continue;
+                    }
+
                     // Send notification on main thread
                     new Handler(Looper.getMainLooper()).post(() -> {
                         notificationHelper.showShoppingReminder(supermarket.getName(), unpurchasedCount);
@@ -243,6 +249,38 @@ public class LocationTrackingService extends Service {
         }
 
         return true;
+    }
+
+    /**
+     * Check if a store is enabled in user preferences
+     * Maps store names to store type preferences
+     */
+    private boolean isStoreEnabled(String storeName) {
+        if (storeName == null) {
+            return true;
+        }
+
+        String lowerName = storeName.toLowerCase();
+
+        // Map store names to preference keys
+        if (lowerName.contains("99 speedmart") || lowerName.contains("99speedmart")) {
+            return preferencesHelper.isStoreTypeEnabled("99speedmart");
+        } else if (lowerName.contains("kk mart") || lowerName.contains("kk super mart")) {
+            return preferencesHelper.isStoreTypeEnabled("kkmart");
+        } else if (lowerName.contains("caring")) {
+            return preferencesHelper.isStoreTypeEnabled("caring");
+        } else if (lowerName.contains("watsons")) {
+            return preferencesHelper.isStoreTypeEnabled("watsons");
+        } else if (lowerName.contains("guardian")) {
+            return preferencesHelper.isStoreTypeEnabled("guardian");
+        } else if (lowerName.contains("lotus")) {
+            return preferencesHelper.isStoreTypeEnabled("lotus");
+        } else if (lowerName.contains("jaya grocer")) {
+            return preferencesHelper.isStoreTypeEnabled("jayagrocer");
+        } else {
+            // For all other stores (AEON, Village Grocer, etc.)
+            return preferencesHelper.isStoreTypeEnabled("other");
+        }
     }
 
     /**

@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Header -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Select Store Types"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Choose which stores you want to receive notifications for when nearby."
+            android:textSize="14sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="24dp" />
+
+        <!-- Convenience Stores Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Convenience Stores"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="8dp" />
+
+        <CheckBox
+            android:id="@+id/cb99Speedmart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="99 Speedmart"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbKKMart"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="KK Super Mart"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <!-- Pharmacies Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Pharmacies & Health"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="16dp" />
+
+        <CheckBox
+            android:id="@+id/cbCaringPharmacy"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Caring Pharmacy"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbWatsons"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Watsons"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbGuardian"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Guardian"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <!-- Supermarkets Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Supermarkets"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"
+            android:layout_marginTop="16dp" />
+
+        <CheckBox
+            android:id="@+id/cbLotus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Lotus's"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbJayaGrocer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Jaya Grocer"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <CheckBox
+            android:id="@+id/cbOtherSupermarkets"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Other Supermarkets (AEON, Village Grocer, etc.)"
+            android:textSize="16sp"
+            android:padding="8dp" />
+
+        <!-- Info Note -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="💡 Tip: Select only stores where you actually shop to avoid unnecessary notifications."
+            android:textSize="12sp"
+            android:textColor="@android:color/holo_blue_dark"
+            android:background="#E3F2FD"
+            android:padding="12dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Save Button -->
+        <Button
+            android:id="@+id/btnSavePreferences"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save Preferences"
+            android:textSize="16sp"
+            android:layout_marginTop="8dp" />
+
+    </LinearLayout>
+
+</ScrollView>

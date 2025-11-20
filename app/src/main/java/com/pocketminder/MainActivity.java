@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     private Button btnStartTracking;
     private Button btnStopTracking;
     private Button btnClearPurchased;
+    private Button btnTestNotification;
     private TextView tvStatus;
     private TextView tvLocationInfo;
 
@@ -95,6 +96,7 @@ public class MainActivity extends AppCompatActivity {
         btnStartTracking = findViewById(R.id.btnStartTracking);
         btnStopTracking = findViewById(R.id.btnStopTracking);
         btnClearPurchased = findViewById(R.id.btnClearPurchased);
+        btnTestNotification = findViewById(R.id.btnTestNotification);
         tvStatus = findViewById(R.id.tvStatus);
         tvLocationInfo = findViewById(R.id.tvLocationInfo);
 
@@ -196,6 +198,8 @@ public class MainActivity extends AppCompatActivity {
         btnStopTracking.setOnClickListener(v -> stopTrackingService());
 
         btnClearPurchased.setOnClickListener(v -> clearPurchasedItems());
+
+        btnTestNotification.setOnClickListener(v -> triggerTestNotification());
     }
 
     /**
@@ -410,6 +414,81 @@ public class MainActivity extends AppCompatActivity {
                         "• Works in the background even when app is closed\n\n" +
                         "Please grant location permissions to get started.")
                 .setPositiveButton("Get Started", null)
+                .show();
+    }
+
+    /**
+     * Trigger a test notification (for development purposes)
+     */
+    private void triggerTestNotification() {
+        int unpurchasedCount = dbHelper.getUnpurchasedItemsCount();
+
+        if (unpurchasedCount == 0) {
+            Toast.makeText(this, "Add some items to your shopping list first!", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Create a test notification with mock supermarket data
+        com.pocketminder.util.NotificationHelper notificationHelper =
+            new com.pocketminder.util.NotificationHelper(this);
+
+        // Mock location (e.g., near Jaya Grocer Kuala Lumpur)
+        double testLat = 3.1569;
+        double testLng = 101.7123;
+
+        notificationHelper.showShoppingReminder("Test Supermarket (99 Speedmart)",
+            unpurchasedCount, testLat, testLng);
+
+        Toast.makeText(this, "Test notification sent! (" + unpurchasedCount + " items)",
+            Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(android.view.Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(android.view.MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_settings) {
+            startActivity(new Intent(this, SettingsActivity.class));
+            return true;
+        } else if (id == R.id.action_store_preferences) {
+            startActivity(new Intent(this, StorePreferencesActivity.class));
+            return true;
+        } else if (id == R.id.action_refresh) {
+            loadShoppingList();
+            if (serviceBound && locationService != null) {
+                updateLocationInfo();
+            }
+            Toast.makeText(this, "Refreshed", Toast.LENGTH_SHORT).show();
+            return true;
+        } else if (id == R.id.action_about) {
+            showAboutDialog();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
+    /**
+     * Show about dialog
+     */
+    private void showAboutDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("About Pocket Minder")
+                .setMessage("Version 1.2\n\n" +
+                        "A smart shopping reminder app that notifies you when you're near stores.\n\n" +
+                        "Features:\n" +
+                        "• Shopping list management\n" +
+                        "• Location-based notifications\n" +
+                        "• Support for Malaysian stores\n" +
+                        "• Background tracking\n" +
+                        "• Customizable preferences")
+                .setPositiveButton("OK", null)
                 .show();
     }
 

@@ -68,4 +68,22 @@ public class PreferencesHelper {
     public void setGeofencingEnabled(boolean enabled) {
         preferences.edit().putBoolean(KEY_USE_GEOFENCING, enabled).apply();
     }
+
+    /**
+     * Check if a specific store type is enabled for notifications
+     * @param storeType The store type identifier (e.g., "99speedmart", "kkmart", "caring")
+     * @return true if enabled, default is true (all stores enabled by default)
+     */
+    public boolean isStoreTypeEnabled(String storeType) {
+        return preferences.getBoolean("store_" + storeType, true);
+    }
+
+    /**
+     * Enable or disable notifications for a specific store type
+     * @param storeType The store type identifier (e.g., "99speedmart", "kkmart", "caring")
+     * @param enabled true to enable, false to disable
+     */
+    public void setStoreTypeEnabled(String storeType, boolean enabled) {
+        preferences.edit().putBoolean("store_" + storeType, enabled).apply();
+    }
 }

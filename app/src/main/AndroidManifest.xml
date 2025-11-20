@@ -43,6 +43,13 @@
             android:label="Settings"
             android:parentActivityName=".MainActivity" />
 
+        <!-- Store Preferences Activity -->
+        <activity
+            android:name=".StorePreferencesActivity"
+            android:exported="false"
+            android:label="Store Notifications"
+            android:parentActivityName=".MainActivity" />
+
         <!-- Location Tracking Foreground Service -->
         <service
             android:name=".service.LocationTrackingService"

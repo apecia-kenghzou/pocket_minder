@@ -97,4 +97,14 @@
         android:text="Clear Purchased Items"
         android:textColor="@android:color/holo_red_dark" />
 
+    <!-- Test Notification Button (Development Only) -->
+    <Button
+        android:id="@+id/btnTestNotification"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:text="[DEV] Test Notification"
+        android:textColor="@android:color/holo_blue_dark"
+        android:backgroundTint="@android:color/holo_orange_light" />
+
 </LinearLayout>
