@@ -219,7 +219,23 @@ public class LocationTrackingService extends Service {
 
             nearbySupermarkets = supermarkets;
 
-            // STEP 4: Sort supermarkets by distance (closest first)
+            // STEP 4: Check GLOBAL cooldown first
+            // If ANY store was notified recently, don't notify for ANY store (prevents spam)
+            long lastGlobalNotification = preferencesHelper.getLastNotificationTime();
+            long globalCooldownMs = preferencesHelper.getNotificationCooldownMs();
+            long timeSinceLastNotification = System.currentTimeMillis() - lastGlobalNotification;
+
+            if (lastGlobalNotification > 0 && timeSinceLastNotification < globalCooldownMs) {
+                long cooldownHours = preferencesHelper.getNotificationCooldownHours();
+                long hoursAgo = timeSinceLastNotification / 3600000L;
+                long minutesAgo = (timeSinceLastNotification % 3600000L) / 60000L;
+                String lastStore = preferencesHelper.getLastNotifiedSupermarket();
+                Log.d(TAG, "⏸ Global cooldown active - last notified for " + lastStore +
+                        " " + hoursAgo + "h " + minutesAgo + "m ago (cooldown: " + cooldownHours + "h)");
+                return; // Skip all notifications until global cooldown expires
+            }
+
+            // STEP 5: Sort supermarkets by distance (closest first)
             // This ensures we always notify for the NEAREST store, not a random one
             final double currentLat = currentLocation.getLatitude();
             final double currentLng = currentLocation.getLongitude();
@@ -234,7 +250,7 @@ public class LocationTrackingService extends Service {
 
             Log.d(TAG, "Sorted " + supermarkets.size() + " supermarkets by distance");
 
-            // STEP 5: Check proximity to each supermarket (now sorted by distance, closest first)
+            // STEP 6: Check proximity to each supermarket (now sorted by distance, closest first)
             for (Supermarket supermarket : supermarkets) {
                 float distance = supermarket.distanceTo(
                         currentLocation.getLatitude(),
@@ -242,7 +258,7 @@ public class LocationTrackingService extends Service {
 
                 Log.d(TAG, "Distance to " + supermarket.getName() + ": " + distance + "m");
 
-                // STEP 6: Check if within notification threshold
+                // STEP 7: Check if within notification threshold
                 if (distance <= proximityThreshold) {
                     // Check if this store type is enabled in user preferences
                     if (!isStoreEnabled(supermarket.getName())) {
@@ -250,14 +266,16 @@ public class LocationTrackingService extends Service {
                         continue;
                     }
 
-                    // CRITICAL: Check cooldown FIRST (persistent check in SharedPreferences)
-                    // This prevents spam even if in-memory set was cleared
+                    // Check per-store cooldown (prevents re-notifying for same store)
+                    // This is a secondary check after global cooldown
+                    // Example: Notified for Store A at 12pm, near Store A again at 4pm
+                    // Global cooldown expired, but Store A still has per-store cooldown
                     if (!preferencesHelper.canNotifyStore(supermarket.getPlaceId())) {
                         long lastNotif = preferencesHelper.getStoreLastNotificationTime(supermarket.getPlaceId());
                         long cooldownHours = preferencesHelper.getNotificationCooldownHours();
                         long hoursAgo = (System.currentTimeMillis() - lastNotif) / 3600000L;
                         long minutesAgo = ((System.currentTimeMillis() - lastNotif) % 3600000L) / 60000L;
-                        Log.d(TAG, "Cooldown active for " + supermarket.getName() +
+                        Log.d(TAG, "Per-store cooldown active for " + supermarket.getName() +
                                 " (notified " + hoursAgo + "h " + minutesAgo + "m ago, cooldown: " + cooldownHours + "h)");
                         // Keep in notified set to avoid repeated cooldown checks
                         notifiedSupermarkets.add(supermarket.getPlaceId());
@@ -270,7 +288,7 @@ public class LocationTrackingService extends Service {
                         continue;
                     }
 
-                    // All checks passed - send notification
+                    // All checks passed - send notification for NEAREST eligible store
                     new Handler(Looper.getMainLooper()).post(() -> {
                         notificationHelper.showShoppingReminder(
                                 supermarket.getName(),
