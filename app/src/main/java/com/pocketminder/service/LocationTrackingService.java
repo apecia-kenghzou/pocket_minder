@@ -345,34 +345,23 @@ public class LocationTrackingService extends Service {
 
     /**
      * Check if a store is enabled in user preferences
-     * Maps store names to store type preferences
+     * Converts store name to preference key dynamically
+     * Examples: "99 Speedmart" -> "store_99_speedmart"
+     *           "Walmart" -> "store_walmart"
      */
     private boolean isStoreEnabled(String storeName) {
-        if (storeName == null) {
-            return true;
+        if (storeName == null || storeName.trim().isEmpty()) {
+            return true; // Default to enabled if no name
         }
 
-        String lowerName = storeName.toLowerCase();
+        // Convert store name to same key format as StorePreferencesActivity
+        String storeKey = "store_" + storeName.toLowerCase()
+                .replaceAll("[^a-z0-9]", "_")
+                .replaceAll("_+", "_")
+                .replaceAll("^_|_$", "");
 
-        // Map store names to preference keys
-        if (lowerName.contains("99 speedmart") || lowerName.contains("99speedmart")) {
-            return preferencesHelper.isStoreTypeEnabled("99speedmart");
-        } else if (lowerName.contains("kk mart") || lowerName.contains("kk super mart")) {
-            return preferencesHelper.isStoreTypeEnabled("kkmart");
-        } else if (lowerName.contains("caring")) {
-            return preferencesHelper.isStoreTypeEnabled("caring");
-        } else if (lowerName.contains("watsons")) {
-            return preferencesHelper.isStoreTypeEnabled("watsons");
-        } else if (lowerName.contains("guardian")) {
-            return preferencesHelper.isStoreTypeEnabled("guardian");
-        } else if (lowerName.contains("lotus")) {
-            return preferencesHelper.isStoreTypeEnabled("lotus");
-        } else if (lowerName.contains("jaya grocer")) {
-            return preferencesHelper.isStoreTypeEnabled("jayagrocer");
-        } else {
-            // For all other stores (AEON, Village Grocer, etc.)
-            return preferencesHelper.isStoreTypeEnabled("other");
-        }
+        // Check if this store is enabled (default: true)
+        return preferencesHelper.isStoreTypeEnabled(storeKey);
     }
 
     /**

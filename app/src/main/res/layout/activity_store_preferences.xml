@@ -13,7 +13,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select Store Types"
+            android:text="Store Notifications"
             android:textSize="20sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
@@ -21,104 +21,61 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Choose which stores you want to receive notifications for when nearby."
+            android:text="Choose which stores you want to receive notifications for. Stores are automatically discovered from your location."
             android:textSize="14sp"
             android:textColor="@android:color/darker_gray"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="16dp" />
 
-        <!-- Convenience Stores Section -->
+        <!-- No Stores Message (hidden when stores found) -->
         <TextView
+            android:id="@+id/tvNoStores"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Convenience Stores"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp"
-            android:layout_marginTop="8dp" />
+            android:text="No stores found in cache."
+            android:textSize="14sp"
+            android:textColor="@android:color/holo_orange_dark"
+            android:background="#FFF3E0"
+            android:padding="16dp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp"
+            android:visibility="gone" />
 
-        <CheckBox
-            android:id="@+id/cb99Speedmart"
+        <!-- Bulk Actions -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="99 Speedmart"
-            android:textSize="16sp"
-            android:padding="8dp" />
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="16dp">
 
-        <CheckBox
-            android:id="@+id/cbKKMart"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="KK Super Mart"
-            android:textSize="16sp"
-            android:padding="8dp" />
+            <Button
+                android:id="@+id/btnSelectAll"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Select All"
+                android:textSize="14sp"
+                android:layout_marginEnd="8dp"
+                style="?android:attr/buttonBarButtonStyle" />
 
-        <!-- Pharmacies Section -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Pharmacies &amp; Health"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp"
-            android:layout_marginTop="16dp" />
+            <Button
+                android:id="@+id/btnDeselectAll"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Deselect All"
+                android:textSize="14sp"
+                android:layout_marginStart="8dp"
+                style="?android:attr/buttonBarButtonStyle" />
+        </LinearLayout>
 
-        <CheckBox
-            android:id="@+id/cbCaringPharmacy"
+        <!-- Dynamic Store List Container -->
+        <LinearLayout
+            android:id="@+id/storeListContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Caring Pharmacy"
-            android:textSize="16sp"
-            android:padding="8dp" />
-
-        <CheckBox
-            android:id="@+id/cbWatsons"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Watsons"
-            android:textSize="16sp"
-            android:padding="8dp" />
-
-        <CheckBox
-            android:id="@+id/cbGuardian"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Guardian"
-            android:textSize="16sp"
-            android:padding="8dp" />
-
-        <!-- Supermarkets Section -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Supermarkets"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp"
-            android:layout_marginTop="16dp" />
-
-        <CheckBox
-            android:id="@+id/cbLotus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Lotus's"
-            android:textSize="16sp"
-            android:padding="8dp" />
-
-        <CheckBox
-            android:id="@+id/cbJayaGrocer"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Jaya Grocer"
-            android:textSize="16sp"
-            android:padding="8dp" />
-
-        <CheckBox
-            android:id="@+id/cbOtherSupermarkets"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Other Supermarkets (AEON, Village Grocer, etc.)"
-            android:textSize="16sp"
-            android:padding="8dp" />
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp" />
 
         <!-- Info Note -->
         <TextView
@@ -129,7 +86,6 @@
             android:textColor="@android:color/holo_blue_dark"
             android:background="#E3F2FD"
             android:padding="12dp"
-            android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp" />
 
         <!-- Save Button -->
@@ -138,8 +94,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Save Preferences"
-            android:textSize="16sp"
-            android:layout_marginTop="8dp" />
+            android:textSize="16sp" />
 
     </LinearLayout>
 

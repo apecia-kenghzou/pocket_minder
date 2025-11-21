@@ -166,6 +166,39 @@ public class SupermarketCacheManager {
     }
 
     /**
+     * Get all unique store names from valid (non-expired) cache
+     * Used for dynamic store preferences
+     * @return List of unique store names sorted alphabetically
+     */
+    public List<String> getAllUniqueStoreNames() {
+        List<String> storeNames = new ArrayList<>();
+        SQLiteDatabase db = dbHelper.getReadableDatabase();
+
+        long expiryTime = System.currentTimeMillis() - Constants.CACHE_EXPIRY_MS;
+
+        // Get distinct store names from valid cache entries
+        String query = "SELECT DISTINCT " + COLUMN_NAME +
+                " FROM " + TABLE_CACHE +
+                " WHERE " + COLUMN_CACHED_TIME + " > ?" +
+                " ORDER BY " + COLUMN_NAME + " ASC";
+
+        Cursor cursor = db.rawQuery(query, new String[]{String.valueOf(expiryTime)});
+
+        if (cursor.moveToFirst()) {
+            do {
+                String name = cursor.getString(0);
+                if (name != null && !name.trim().isEmpty()) {
+                    storeNames.add(name);
+                }
+            } while (cursor.moveToNext());
+        }
+        cursor.close();
+
+        android.util.Log.d(TAG, "Found " + storeNames.size() + " unique store names in cache");
+        return storeNames;
+    }
+
+    /**
      * Get cache statistics
      */
     public CacheStats getCacheStats() {
