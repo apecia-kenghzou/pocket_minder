@@ -225,25 +225,35 @@ public class LocationTrackingService extends Service {
 
                 Log.d(TAG, "Distance to " + supermarket.getName() + ": " + distance + "m");
 
-                // If within proximity threshold and not already notified
-                if (distance <= proximityThreshold && !notifiedSupermarkets.contains(supermarket.getPlaceId())) {
+                // STEP 4: Check if within notification threshold
+                if (distance <= proximityThreshold) {
                     // Check if this store type is enabled in user preferences
                     if (!isStoreEnabled(supermarket.getName())) {
                         Log.d(TAG, "Store type disabled for: " + supermarket.getName());
                         continue;
                     }
 
-                    // Check if cooldown has passed for this specific store
+                    // CRITICAL: Check cooldown FIRST (persistent check in SharedPreferences)
+                    // This prevents spam even if in-memory set was cleared
                     if (!preferencesHelper.canNotifyStore(supermarket.getPlaceId())) {
                         long lastNotif = preferencesHelper.getStoreLastNotificationTime(supermarket.getPlaceId());
                         long cooldownHours = preferencesHelper.getNotificationCooldownHours();
                         long hoursAgo = (System.currentTimeMillis() - lastNotif) / 3600000L;
+                        long minutesAgo = ((System.currentTimeMillis() - lastNotif) % 3600000L) / 60000L;
                         Log.d(TAG, "Cooldown active for " + supermarket.getName() +
-                                " (notified " + hoursAgo + "h ago, cooldown: " + cooldownHours + "h)");
+                                " (notified " + hoursAgo + "h " + minutesAgo + "m ago, cooldown: " + cooldownHours + "h)");
+                        // Keep in notified set to avoid repeated cooldown checks
+                        notifiedSupermarkets.add(supermarket.getPlaceId());
                         continue;
                     }
 
-                    // Send notification on main thread
+                    // Check in-memory set (prevents multiple notifications while in range)
+                    if (notifiedSupermarkets.contains(supermarket.getPlaceId())) {
+                        Log.d(TAG, "Already notified for " + supermarket.getName() + " in this session");
+                        continue;
+                    }
+
+                    // All checks passed - send notification
                     new Handler(Looper.getMainLooper()).post(() -> {
                         notificationHelper.showShoppingReminder(
                                 supermarket.getName(),
@@ -266,11 +276,8 @@ public class LocationTrackingService extends Service {
                 }
             }
 
-            // Clear notified set if user has moved away from all supermarkets
-            if (shouldClearNotifiedSet(supermarkets, currentLocation, proximityThreshold)) {
-                notifiedSupermarkets.clear();
-                Log.d(TAG, "Cleared notified supermarkets set");
-            }
+            // Clean up notified set - remove stores that are far away AND past cooldown
+            cleanupNotifiedSet(supermarkets, currentLocation, proximityThreshold);
 
         } catch (Exception e) {
             Log.e(TAG, "Error checking nearby supermarkets", e);
@@ -278,26 +285,51 @@ public class LocationTrackingService extends Service {
     }
 
     /**
-     * Check if we should clear the notified supermarkets set
-     * (when user moves far from all previously notified supermarkets)
+     * Clean up the notified supermarkets set
+     * Remove stores that are far away (>3x threshold) AND have expired cooldown
+     * This keeps the in-memory set synchronized with the cooldown system
      */
-    private boolean shouldClearNotifiedSet(List<Supermarket> supermarkets, Location currentLocation, int proximityThreshold) {
+    private void cleanupNotifiedSet(List<Supermarket> supermarkets, Location currentLocation, int proximityThreshold) {
         if (notifiedSupermarkets.isEmpty()) {
-            return false;
+            return;
         }
 
-        for (Supermarket supermarket : supermarkets) {
-            if (notifiedSupermarkets.contains(supermarket.getPlaceId())) {
-                float distance = supermarket.distanceTo(
-                        currentLocation.getLatitude(),
-                        currentLocation.getLongitude());
-                if (distance <= proximityThreshold * 3) { // 3x threshold
-                    return false;
+        Set<String> toRemove = new HashSet<>();
+
+        for (String placeId : notifiedSupermarkets) {
+            // Find the supermarket in the list
+            Supermarket store = null;
+            for (Supermarket s : supermarkets) {
+                if (s.getPlaceId().equals(placeId)) {
+                    store = s;
+                    break;
+                }
+            }
+
+            if (store == null) {
+                // Store not in current list (maybe outside 10km cache), remove from set
+                toRemove.add(placeId);
+                continue;
+            }
+
+            float distance = store.distanceTo(
+                    currentLocation.getLatitude(),
+                    currentLocation.getLongitude());
+
+            // Remove from set if: far away (>3x threshold) AND cooldown expired
+            if (distance > proximityThreshold * 3) {
+                if (preferencesHelper.canNotifyStore(placeId)) {
+                    // Far away and cooldown expired - safe to remove
+                    toRemove.add(placeId);
+                    Log.d(TAG, "Removed " + store.getName() + " from notified set (far away & cooldown expired)");
+                } else {
+                    // Far away but still in cooldown - keep in set to prevent premature notification
+                    Log.d(TAG, "Keeping " + store.getName() + " in notified set (cooldown still active)");
                 }
             }
         }
 
-        return true;
+        notifiedSupermarkets.removeAll(toRemove);
     }
 
     /**
