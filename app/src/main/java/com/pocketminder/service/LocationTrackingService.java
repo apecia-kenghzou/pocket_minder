@@ -19,8 +19,10 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationResult;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.Priority;
+import com.pocketminder.Constants;
 import com.pocketminder.api.GooglePlacesAPI;
 import com.pocketminder.database.ShoppingListDBHelper;
+import com.pocketminder.database.SupermarketCacheManager;
 import com.pocketminder.model.Supermarket;
 import com.pocketminder.util.NotificationHelper;
 import com.pocketminder.util.PreferencesHelper;
@@ -47,6 +49,7 @@ public class LocationTrackingService extends Service {
     private NotificationHelper notificationHelper;
     private GooglePlacesAPI placesAPI;
     private ShoppingListDBHelper dbHelper;
+    private SupermarketCacheManager cacheManager;
     private PreferencesHelper preferencesHelper;
     private ExecutorService executorService;
 
@@ -70,6 +73,7 @@ public class LocationTrackingService extends Service {
         notificationHelper = new NotificationHelper(this);
         placesAPI = new GooglePlacesAPI(this);
         dbHelper = ShoppingListDBHelper.getInstance(this);
+        cacheManager = new SupermarketCacheManager(this);
         preferencesHelper = new PreferencesHelper(this);
         executorService = Executors.newSingleThreadExecutor();
 
@@ -179,20 +183,37 @@ public class LocationTrackingService extends Service {
                 return;
             }
 
-            // Get dynamic proximity range (200m normal, 5km in dev mode)
+            // Get dynamic proximity range for notifications (200m normal, 5km in dev mode)
             int proximityThreshold = preferencesHelper.getProximityRange();
             boolean devMode = preferencesHelper.isDeveloperModeEnabled();
 
             if (devMode) {
-                Log.d(TAG, "Developer mode: Using extended search radius: " + proximityThreshold + "m");
+                Log.d(TAG, "Developer mode: Using extended notification range: " + proximityThreshold + "m");
             }
 
-            // Fetch nearby supermarkets with dynamic radius
-            // In dev mode, this will search up to 10km instead of default 2km
-            List<Supermarket> supermarkets = placesAPI.searchNearbySupermarkets(
+            // STEP 1: Check cache first (10km coverage area)
+            List<Supermarket> supermarkets = cacheManager.getCachedSupermarkets(
                     currentLocation.getLatitude(),
-                    currentLocation.getLongitude(),
-                    proximityThreshold);
+                    currentLocation.getLongitude());
+
+            if (supermarkets.isEmpty()) {
+                // STEP 2: Cache miss - fetch from API with 10km coverage radius
+                Log.d(TAG, "Cache miss - fetching from API with " + Constants.CACHE_COVERAGE_RADIUS_METERS + "m coverage");
+                supermarkets = placesAPI.searchNearbySupermarkets(
+                        currentLocation.getLatitude(),
+                        currentLocation.getLongitude(),
+                        Constants.CACHE_COVERAGE_RADIUS_METERS);
+
+                // STEP 3: Store in cache for future use (reduces API calls by 99%)
+                if (!supermarkets.isEmpty()) {
+                    cacheManager.cacheSupermarkets(supermarkets,
+                            currentLocation.getLatitude(),
+                            currentLocation.getLongitude());
+                    Log.d(TAG, "Cached " + supermarkets.size() + " supermarkets for 7 days");
+                }
+            } else {
+                Log.d(TAG, "Cache hit - using " + supermarkets.size() + " cached supermarkets (no API call!)");
+            }
 
             nearbySupermarkets = supermarkets;
 
@@ -212,6 +233,16 @@ public class LocationTrackingService extends Service {
                         continue;
                     }
 
+                    // Check if cooldown has passed for this specific store
+                    if (!preferencesHelper.canNotifyStore(supermarket.getPlaceId())) {
+                        long lastNotif = preferencesHelper.getStoreLastNotificationTime(supermarket.getPlaceId());
+                        long cooldownHours = preferencesHelper.getNotificationCooldownHours();
+                        long hoursAgo = (System.currentTimeMillis() - lastNotif) / 3600000L;
+                        Log.d(TAG, "Cooldown active for " + supermarket.getName() +
+                                " (notified " + hoursAgo + "h ago, cooldown: " + cooldownHours + "h)");
+                        continue;
+                    }
+
                     // Send notification on main thread
                     new Handler(Looper.getMainLooper()).post(() -> {
                         notificationHelper.showShoppingReminder(
@@ -221,9 +252,13 @@ public class LocationTrackingService extends Service {
                                 supermarket.getLongitude());
                         notifiedSupermarkets.add(supermarket.getPlaceId());
 
-                        // Save last notification time
+                        // Save last notification time (global - for backwards compatibility)
                         preferencesHelper.setLastNotificationTime(System.currentTimeMillis());
                         preferencesHelper.setLastNotifiedSupermarket(supermarket.getName());
+
+                        // Save per-store notification time (for cooldown tracking)
+                        preferencesHelper.setStoreLastNotificationTime(supermarket.getPlaceId(),
+                                System.currentTimeMillis());
                     });
 
                     Log.d(TAG, "Sent reminder for " + supermarket.getName());

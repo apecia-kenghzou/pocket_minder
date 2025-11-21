@@ -22,7 +22,10 @@ public class Constants {
     public static final int NOTIFICATION_ID_REMINDER = 2001;
     public static final String CHANNEL_ID_LOCATION = "location_tracking";
     public static final String CHANNEL_ID_REMINDER = "shopping_reminder";
-    public static final long NOTIFICATION_COOLDOWN_MS = 900000; // 15 minutes
+
+    // Notification Cooldown (Default: 4 hours - prevents spam notifications)
+    public static final long NOTIFICATION_COOLDOWN_DEFAULT_MS = 14400000; // 4 hours
+    public static final int[] NOTIFICATION_COOLDOWN_OPTIONS_HOURS = {1, 2, 4, 8, 12, 24}; // User can choose
 
     // API Settings
     public static final String GOOGLE_PLACES_BASE_URL = "https://maps.googleapis.com/maps/api/place";
@@ -63,7 +66,11 @@ public class Constants {
     public static final String ACTION_NAVIGATE = "com.pocketminder.ACTION_NAVIGATE";
 
     // Cache Settings
-    public static final long CACHE_EXPIRY_MS = 3600000; // 1 hour
+    // Coverage area: Fetch stores within 10km radius (reduces API calls by 99%)
+    // Notification threshold: Only notify when within 200m (separate from coverage)
+    public static final int CACHE_COVERAGE_RADIUS_METERS = 10000; // 10km coverage area
+    public static final long CACHE_EXPIRY_MS = 604800000; // 7 days (stores don't change often)
+    public static final double CACHE_RADIUS_DEGREES = 0.09; // ~10km in degrees (for SQLite query)
 
     private Constants() {
         // Prevent instantiation

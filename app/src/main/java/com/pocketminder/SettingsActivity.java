@@ -2,9 +2,12 @@ package com.pocketminder;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.Switch;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -25,9 +28,11 @@ public class SettingsActivity extends AppCompatActivity {
     private TextView tvRadiusValue;
     private TextView tvDevRangeValue;
     private LinearLayout layoutDevRange;
+    private Spinner spinnerCooldown;
     private Button btnSave;
 
     private PreferencesHelper preferencesHelper;
+    private int[] cooldownOptions = {1, 2, 4, 8, 12, 24}; // hours
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,7 +58,18 @@ public class SettingsActivity extends AppCompatActivity {
         tvRadiusValue = findViewById(R.id.tvRadiusValue);
         tvDevRangeValue = findViewById(R.id.tvDevRangeValue);
         layoutDevRange = findViewById(R.id.layoutDevRange);
+        spinnerCooldown = findViewById(R.id.spinnerCooldown);
         btnSave = findViewById(R.id.btnSave);
+
+        // Setup cooldown spinner
+        String[] cooldownLabels = new String[cooldownOptions.length];
+        for (int i = 0; i < cooldownOptions.length; i++) {
+            cooldownLabels[i] = cooldownOptions[i] + " hour" + (cooldownOptions[i] > 1 ? "s" : "");
+        }
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, cooldownLabels);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerCooldown.setAdapter(adapter);
     }
 
     private void loadSettings() {
@@ -76,6 +92,17 @@ public class SettingsActivity extends AppCompatActivity {
             seekBarDevRange.setProgress(4000); // Default 5km
             updateDevRangeLabel(5000);
         }
+
+        // Load cooldown setting
+        int cooldownHours = preferencesHelper.getNotificationCooldownHours();
+        int spinnerPosition = 0;
+        for (int i = 0; i < cooldownOptions.length; i++) {
+            if (cooldownOptions[i] == cooldownHours) {
+                spinnerPosition = i;
+                break;
+            }
+        }
+        spinnerCooldown.setSelection(spinnerPosition);
     }
 
     private void setupListeners() {
@@ -149,6 +176,11 @@ public class SettingsActivity extends AppCompatActivity {
 
         int radius = seekBarRadius.getProgress() + 100;
         preferencesHelper.setNotificationRadius(radius);
+
+        // Save cooldown setting
+        int selectedCooldownIndex = spinnerCooldown.getSelectedItemPosition();
+        int cooldownHours = cooldownOptions[selectedCooldownIndex];
+        preferencesHelper.setNotificationCooldownHours(cooldownHours);
 
         // Save developer mode settings
         boolean devMode = switchDeveloperMode.isChecked();

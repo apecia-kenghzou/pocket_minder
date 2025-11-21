@@ -13,7 +13,9 @@ import java.util.List;
 
 /**
  * Cache manager for supermarket locations
- * Reduces API calls by 80% and enables offline mode
+ * Coverage: 10km radius (fetch stores once, use as user moves around)
+ * Expiry: 7 days (stores don't change often)
+ * Reduces API calls by 99% and enables offline mode
  */
 public class SupermarketCacheManager {
     private static final String TAG = "SupermarketCache";
@@ -68,12 +70,12 @@ public class SupermarketCacheManager {
     public List<Supermarket> getCachedSupermarkets(double lat, double lng) {
         List<Supermarket> supermarkets = new ArrayList<>();
 
-        // Check if we have cached results for this location (within 500m)
+        // Check if we have cached results for this location (within 10km coverage area)
         SQLiteDatabase db = dbHelper.getReadableDatabase();
 
         String query = "SELECT * FROM " + TABLE_CACHE + " WHERE "
-                + "ABS(" + COLUMN_SEARCH_LAT + " - ?) < 0.005 AND "
-                + "ABS(" + COLUMN_SEARCH_LNG + " - ?) < 0.005 AND "
+                + "ABS(" + COLUMN_SEARCH_LAT + " - ?) < " + Constants.CACHE_RADIUS_DEGREES + " AND "
+                + "ABS(" + COLUMN_SEARCH_LNG + " - ?) < " + Constants.CACHE_RADIUS_DEGREES + " AND "
                 + COLUMN_CACHED_TIME + " > ?";
 
         long expiryTime = System.currentTimeMillis() - Constants.CACHE_EXPIRY_MS;

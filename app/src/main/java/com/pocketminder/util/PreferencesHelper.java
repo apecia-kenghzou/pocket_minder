@@ -16,6 +16,7 @@ public class PreferencesHelper {
     private static final String KEY_USE_GEOFENCING = "use_geofencing";
     private static final String KEY_DEVELOPER_MODE = "developer_mode";
     private static final String KEY_DEV_PROXIMITY_RANGE = "dev_proximity_range";
+    private static final String KEY_NOTIFICATION_COOLDOWN_HOURS = "notification_cooldown_hours";
 
     private final SharedPreferences preferences;
 
@@ -124,5 +125,75 @@ public class PreferencesHelper {
      */
     public void setDevProximityRange(int rangeMeters) {
         preferences.edit().putInt(KEY_DEV_PROXIMITY_RANGE, rangeMeters).apply();
+    }
+
+    /**
+     * Get notification cooldown duration in hours
+     * @return cooldown duration in hours (default: 4 hours)
+     */
+    public int getNotificationCooldownHours() {
+        return preferences.getInt(KEY_NOTIFICATION_COOLDOWN_HOURS, 4);
+    }
+
+    /**
+     * Set notification cooldown duration in hours
+     * @param hours cooldown duration in hours
+     */
+    public void setNotificationCooldownHours(int hours) {
+        preferences.edit().putInt(KEY_NOTIFICATION_COOLDOWN_HOURS, hours).apply();
+    }
+
+    /**
+     * Get notification cooldown duration in milliseconds
+     * @return cooldown duration in milliseconds
+     */
+    public long getNotificationCooldownMs() {
+        return getNotificationCooldownHours() * 3600000L; // hours to milliseconds
+    }
+
+    /**
+     * Get last notification time for a specific store
+     * @param placeId The Google Place ID of the store
+     * @return timestamp in milliseconds, 0 if never notified
+     */
+    public long getStoreLastNotificationTime(String placeId) {
+        return preferences.getLong("store_notif_" + placeId, 0);
+    }
+
+    /**
+     * Set last notification time for a specific store
+     * @param placeId The Google Place ID of the store
+     * @param timestamp timestamp in milliseconds
+     */
+    public void setStoreLastNotificationTime(String placeId, long timestamp) {
+        preferences.edit().putLong("store_notif_" + placeId, timestamp).apply();
+    }
+
+    /**
+     * Check if cooldown has passed for a specific store
+     * @param placeId The Google Place ID of the store
+     * @return true if cooldown has passed and notification can be sent
+     */
+    public boolean canNotifyStore(String placeId) {
+        long lastNotificationTime = getStoreLastNotificationTime(placeId);
+        if (lastNotificationTime == 0) {
+            return true; // Never notified, can notify
+        }
+        long cooldownMs = getNotificationCooldownMs();
+        long timeSinceLastNotification = System.currentTimeMillis() - lastNotificationTime;
+        return timeSinceLastNotification >= cooldownMs;
+    }
+
+    /**
+     * Clear all store notification history (useful for testing or reset)
+     */
+    public void clearAllStoreNotificationHistory() {
+        SharedPreferences.Editor editor = preferences.edit();
+        for (String key : preferences.getAll().keySet()) {
+            if (key.startsWith("store_notif_")) {
+                editor.remove(key);
+            }
+        }
+        editor.apply();
     }
 }
