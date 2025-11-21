@@ -28,6 +28,8 @@ import com.pocketminder.util.NotificationHelper;
 import com.pocketminder.util.PreferencesHelper;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -217,7 +219,22 @@ public class LocationTrackingService extends Service {
 
             nearbySupermarkets = supermarkets;
 
-            // Check proximity to each supermarket
+            // STEP 4: Sort supermarkets by distance (closest first)
+            // This ensures we always notify for the NEAREST store, not a random one
+            final double currentLat = currentLocation.getLatitude();
+            final double currentLng = currentLocation.getLongitude();
+            Collections.sort(supermarkets, new Comparator<Supermarket>() {
+                @Override
+                public int compare(Supermarket s1, Supermarket s2) {
+                    float distance1 = s1.distanceTo(currentLat, currentLng);
+                    float distance2 = s2.distanceTo(currentLat, currentLng);
+                    return Float.compare(distance1, distance2);
+                }
+            });
+
+            Log.d(TAG, "Sorted " + supermarkets.size() + " supermarkets by distance");
+
+            // STEP 5: Check proximity to each supermarket (now sorted by distance, closest first)
             for (Supermarket supermarket : supermarkets) {
                 float distance = supermarket.distanceTo(
                         currentLocation.getLatitude(),
@@ -225,7 +242,7 @@ public class LocationTrackingService extends Service {
 
                 Log.d(TAG, "Distance to " + supermarket.getName() + ": " + distance + "m");
 
-                // STEP 4: Check if within notification threshold
+                // STEP 6: Check if within notification threshold
                 if (distance <= proximityThreshold) {
                     // Check if this store type is enabled in user preferences
                     if (!isStoreEnabled(supermarket.getName())) {
