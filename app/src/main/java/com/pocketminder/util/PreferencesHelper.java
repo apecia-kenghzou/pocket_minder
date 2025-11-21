@@ -17,6 +17,8 @@ public class PreferencesHelper {
     private static final String KEY_DEVELOPER_MODE = "developer_mode";
     private static final String KEY_DEV_PROXIMITY_RANGE = "dev_proximity_range";
     private static final String KEY_NOTIFICATION_COOLDOWN_HOURS = "notification_cooldown_hours";
+    private static final String KEY_LAST_MANUAL_FETCH = "last_manual_fetch";
+    private static final long MANUAL_FETCH_COOLDOWN_MS = 3600000; // 1 hour
 
     private final SharedPreferences preferences;
 
@@ -195,5 +197,48 @@ public class PreferencesHelper {
             }
         }
         editor.apply();
+    }
+
+    /**
+     * Get last manual fetch timestamp
+     * @return timestamp in milliseconds, 0 if never fetched manually
+     */
+    public long getLastManualFetch() {
+        return preferences.getLong(KEY_LAST_MANUAL_FETCH, 0);
+    }
+
+    /**
+     * Set last manual fetch timestamp
+     * @param timestamp timestamp in milliseconds
+     */
+    public void setLastManualFetch(long timestamp) {
+        preferences.edit().putLong(KEY_LAST_MANUAL_FETCH, timestamp).apply();
+    }
+
+    /**
+     * Check if manual fetch cooldown has passed
+     * @return true if cooldown has passed (can fetch again), false otherwise
+     */
+    public boolean canManualFetch() {
+        long lastFetch = getLastManualFetch();
+        if (lastFetch == 0) {
+            return true; // Never fetched, can fetch
+        }
+        long timeSinceFetch = System.currentTimeMillis() - lastFetch;
+        return timeSinceFetch >= MANUAL_FETCH_COOLDOWN_MS;
+    }
+
+    /**
+     * Get remaining cooldown time for manual fetch in minutes
+     * @return remaining minutes, 0 if can fetch
+     */
+    public long getManualFetchCooldownMinutes() {
+        if (canManualFetch()) {
+            return 0;
+        }
+        long lastFetch = getLastManualFetch();
+        long timeSinceFetch = System.currentTimeMillis() - lastFetch;
+        long remainingMs = MANUAL_FETCH_COOLDOWN_MS - timeSinceFetch;
+        return (remainingMs / 60000) + 1; // Round up
     }
 }

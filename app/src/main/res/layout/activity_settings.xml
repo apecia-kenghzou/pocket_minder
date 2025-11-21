@@ -254,6 +254,39 @@
                 android:layout_marginBottom="8dp" />
         </LinearLayout>
 
+        <!-- Manual Fetch Section -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Manual Store Refresh"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="If stores are missing or outdated, manually refresh the store database from your current location."
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <Button
+            android:id="@+id/btnManualFetch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Refresh Store Database"
+            android:textSize="14sp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tvLastFetch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Last refresh: Never"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray"
+            android:layout_marginBottom="24dp" />
+
         <!-- About Section -->
         <TextView
             android:layout_width="match_parent"
