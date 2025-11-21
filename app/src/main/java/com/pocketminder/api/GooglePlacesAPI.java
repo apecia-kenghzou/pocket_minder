@@ -26,6 +26,8 @@ public class GooglePlacesAPI {
     private static final String PLACES_API_BASE = "https://maps.googleapis.com/maps/api/place";
     private static final String TYPE_SUPERMARKET = "supermarket";
     private static final String TYPE_GROCERY = "grocery_or_supermarket";
+    private static final String TYPE_PHARMACY = "pharmacy";
+    private static final String TYPE_DRUGSTORE = "drugstore";
     private static final int DEFAULT_SEARCH_RADIUS = 2000; // 2km radius default
 
     private final String apiKey;
@@ -66,42 +68,63 @@ public class GooglePlacesAPI {
      * @param radiusMeters Search radius in meters (max 50000 per Google API limits)
      */
     public List<Supermarket> searchNearbySupermarkets(double latitude, double longitude, int radiusMeters) {
-        List<Supermarket> supermarkets = new ArrayList<>();
+        List<Supermarket> allStores = new ArrayList<>();
 
         // Google Places API has a max radius of 50km
         int searchRadius = Math.min(radiusMeters, 50000);
 
+        // Search for grocery stores/supermarkets
+        List<Supermarket> groceryStores = searchByType(latitude, longitude, searchRadius, TYPE_GROCERY, "grocery stores");
+        allStores.addAll(groceryStores);
+
+        // Search for pharmacies/drug stores
+        List<Supermarket> pharmacies = searchByType(latitude, longitude, searchRadius, TYPE_PHARMACY, "pharmacies/drug stores");
+        allStores.addAll(pharmacies);
+
+        Log.d(TAG, "✅ Total found: " + allStores.size() + " stores within " + searchRadius + "m " +
+                "(" + groceryStores.size() + " grocery + " + pharmacies.size() + " pharmacy)");
+
+        return allStores;
+    }
+
+    /**
+     * Search for nearby places by type
+     */
+    private List<Supermarket> searchByType(double latitude, double longitude, int radiusMeters, String type, String typeName) {
+        List<Supermarket> stores = new ArrayList<>();
+
         try {
             String urlString = PLACES_API_BASE + "/nearbysearch/json?"
                     + "location=" + latitude + "," + longitude
-                    + "&radius=" + searchRadius
-                    + "&type=" + TYPE_GROCERY
+                    + "&radius=" + radiusMeters
+                    + "&type=" + type
                     + "&key=" + URLEncoder.encode(apiKey, "UTF-8");
 
             // Log API call details (mask the API key)
             String maskedUrl = urlString.replaceAll("key=[^&]+", "key=***MASKED***");
             Log.d(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-            Log.d(TAG, "API Request:");
+            Log.d(TAG, "API Request for " + typeName + ":");
             Log.d(TAG, "  Location: " + latitude + ", " + longitude);
-            Log.d(TAG, "  Radius: " + searchRadius + "m");
+            Log.d(TAG, "  Radius: " + radiusMeters + "m");
+            Log.d(TAG, "  Type: " + type);
             Log.d(TAG, "  URL: " + maskedUrl);
             Log.d(TAG, "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
             String response = makeHttpRequest(urlString);
 
             if (response.isEmpty()) {
-                Log.e(TAG, "❌ Empty response from Google API");
-                return supermarkets;
+                Log.e(TAG, "❌ Empty response from Google API for " + typeName);
+                return stores;
             }
 
-            supermarkets = parseSupermarketResponse(response);
+            stores = parseSupermarketResponse(response);
 
-            Log.d(TAG, "✅ Found " + supermarkets.size() + " supermarkets within " + searchRadius + "m");
+            Log.d(TAG, "✅ Found " + stores.size() + " " + typeName + " within " + radiusMeters + "m");
         } catch (Exception e) {
-            Log.e(TAG, "❌ Error searching supermarkets", e);
+            Log.e(TAG, "❌ Error searching " + typeName, e);
         }
 
-        return supermarkets;
+        return stores;
     }
 
     /**
